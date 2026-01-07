@@ -46,20 +46,6 @@ pesticides_data <- function(raster_folder, polygons_sf) {
     }
   }
   
-  # Run Principal Components Analysis on extracted pesticide columns
-  #pest_matrix <- result_sf[, extracted_cols] %>% st_drop_geometry()
-  #pca_result <- prcomp(pest_matrix, scale. = TRUE)
-  
-  # Show explained variance to check which principal components are most important
-  #explained_var <- summary(pca_result)$importance[2, 1:3]
-  #cat("Explained variance by PC1–PC3:\n")
-  #print(round(explained_var * 100, 2))  # as percentages
-  
-  # Add PC1–PC3 to sf object
-  # result_sf$PC1 <- pca_result$x[, 1]
-  #result_sf$PC2 <- pca_result$x[, 2]
-  #result_sf$PC3 <- pca_result$x[, 3]
-  
   return(result_sf)
 }
 
@@ -78,7 +64,7 @@ england <- st_read(file.path("./LSOA 2021/LSOA/LSOA_2021_EW_BGC.shp"))
 england <- england %>%
   filter(!str_starts(LSOA21CD, "W"))
 
-#link pesticide data and do principal components analysis on it
+#link pesticide data and write to shapefile and CSV
 
 pest_folder <- "./UK_Pesticides/Land-Cover-plus-Pesticides_6100584"
 
