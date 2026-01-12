@@ -163,6 +163,16 @@ power_towers <- extract_layer(gpkg_path, "power_tower", c("operator"), "./power/
 power_plants <- st_centroid(power_plant)
 rm(power_plant)
 
+#separate overhead lines and underground cables
+overhead_lines <- c("bridge", "overground", "overhead", "roof", "surface")
+underground_cables <- c("indoor", "transition", "trough", "tunnel", "underground", "underwater")
+
+overhead <- power_lines %>%
+  dplyr::filter(location %in% overhead_lines)
+
+underground <- power_lines %>%
+  dplyr::filter(location %in% underground_cables)
+
 #load lsoa data and then restrict to English LSOAS by filtering out LSOA codes starting with W (Wales)
 
 england <- st_read(file.path("./LSOA 2021/LSOA/LSOA_2021_EW_BGC.shp"))
@@ -172,7 +182,8 @@ england <- england %>%
 
 #run summarise function for everything
 plants_lsoa <- summarise_to_lsoa(power_plants, england, summary_type = "count", name = "plant_count")
-lines_lsoa <- summarise_to_lsoa(power_lines, england, summary_type = "length", name = "lines_km")
+underground_lsoa <- summarise_to_lsoa(underground, england, summary_type = "length", name = "ug_km")
+overhead_lsoa <- summarise_to_lsoa(overhead, england, summary_type = "length", name = "oh_km")
 substations_lsoa <- summarise_to_lsoa(power_substations, england, summary_type = "count", name = "sub_count")
 towers_lsoa_ct <- summarise_to_lsoa(power_towers, england, summary_type = "count", name = "tower_count")
 towers_lsoa_de <- summarise_to_lsoa(power_towers, england, summary_type = "density", name ="tower_dens_km2")
@@ -181,7 +192,11 @@ towers_lsoa_de <- summarise_to_lsoa(power_towers, england, summary_type = "densi
 #left join everything but only keep the summaries from the joined tables by dropping the geometry 
 lsoa_all <- plants_lsoa %>%
   left_join(
-    lines_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, lines_km),
+    underground_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, ug_km),
+    by = "LSOA21CD"
+  ) %>%
+  left_join(
+    overhead_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, oh_km),
     by = "LSOA21CD"
   ) %>%
   left_join(
