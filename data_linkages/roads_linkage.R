@@ -83,4 +83,11 @@ england <- england %>%
 
 road_folder <- "./roads/data"
 
+#run function 
+
 roads_lsoa <- road_metrics(road_folder, england)
+
+# write to shapefile and CSV
+
+st_write(roads_lsoa, "./linked/england_roads.shp", delete_dsn = TRUE)
+write.csv(st_drop_geometry(roads_lsoa), "./linked/england_roads_CSV.csv", row.names = FALSE)
