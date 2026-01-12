@@ -1,8 +1,10 @@
 # epri-england
 
-Code from the EPRI project to examine power infrastructure, a geographic exposome, and cancer
+Code from the EPRI project to examine power infrastructure, a geographic exposome, and cancer, specifically for creating the exposome file using mostly open data (apart from the UKCEH Land Cover plus Pesticides dataset). All the licenses and data sources are found in this README in the Data Sources section.
 
 ## Directory
+
+The [/data_linkages](https://github.com/eyles-ec/epri-england/tree/main/data_linkages) subfolder contains all of the separate processing files for each data type. They are prefaced with topic_linkage (so Census, Churn, Pesticides, Pollution, Power, Radon, Roads thus far). The [combine_linkages.R](https://github.com/eyles-ec/epri-england/blob/main/data_linkages/combine_linkages.R) file contains the code to link all of the topics together. 
 
 ## Workflow
 
