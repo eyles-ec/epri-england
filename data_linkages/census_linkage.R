@@ -75,6 +75,13 @@ gender_perc <- gender %>%
   ) %>%
   select(LSOA21CD, popn, female)
 
+#ruc, keep only classification
+ruc_class <- ruc %>%
+  mutate(
+    urban_rural = Urban_rural_flag
+  ) %>%
+  select(LSOA21CD, urban_rural)
+
 #fix index column names for population density and households
 
 households <- households %>%
@@ -88,6 +95,7 @@ popden <- popden %>%
 #load in IMD25
 imd25 <- read.csv("IoD25_csv.csv")
 
+
 #combine
 all_census <- list(
   unemp_perc,
@@ -96,7 +104,8 @@ all_census <- list(
   age_perc,
   households,
   popden,
-  imd25
+  imd25,
+  ruc_class
 ) %>%
   reduce(left_join, by = "LSOA21CD")
 
