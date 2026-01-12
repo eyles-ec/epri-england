@@ -23,7 +23,7 @@ england <- england %>%
   filter(!str_starts(LSOA21CD, "W"))
 
 #list CSV topics in order desired for file
-topics <- c("census", "power", "pollution", "landuse", "radon", "pesticides")
+topics <- c("census", "power", "pollution", "roads", "churn", "landuse", "radon", "pesticides")
 
 #run join function
 for (t in topics) {
@@ -34,4 +34,4 @@ for (t in topics) {
 #st_write(england, "./linked/all_england_combined.shp", delete_dsn = TRUE)
 
 #write it all to a csv
-write.csv(st_drop_geometry(england), "./linked/all_england_combined_CSV.csv", row.names = FALSE)
+write.csv(st_drop_geometry(england), "./linked/all_england_combined_CSV_more.csv", row.names = FALSE)
