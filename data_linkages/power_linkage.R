@@ -1,6 +1,7 @@
 library(sf)
 library(dplyr)
 library(tidyr)
+library(purrr)
 
 
 #function to extract layers from the geopackage
@@ -173,6 +174,12 @@ overhead <- power_lines %>%
 underground <- power_lines %>%
   dplyr::filter(location %in% underground_cables)
 
+#load transmission data 
+
+transmission_lines <- st_read(file.path("./transmission/all_data/LINE.shp"))
+transmission_cables <- st_read(file.path("./transmission/all_data/CABLE.shp"))
+
+
 #load lsoa data and then restrict to English LSOAS by filtering out LSOA codes starting with W (Wales)
 
 england <- st_read(file.path("./LSOA 2021/LSOA/LSOA_2021_EW_BGC.shp"))
@@ -182,37 +189,52 @@ england <- england %>%
 
 #run summarise function for everything
 plants_lsoa <- summarise_to_lsoa(power_plants, england, summary_type = "count", name = "plant_count")
-underground_lsoa <- summarise_to_lsoa(underground, england, summary_type = "length", name = "ug_km")
-overhead_lsoa <- summarise_to_lsoa(overhead, england, summary_type = "length", name = "oh_km")
+underground_lsoa <- summarise_to_lsoa(underground, england, summary_type = "length", name = "all_ug_km")
+overhead_lsoa <- summarise_to_lsoa(overhead, england, summary_type = "length", name = "all_oh_km")
+trans_lines_lsoa <- summarise_to_lsoa(transmission_lines, england, summary_type = "length", name = "trans_lines_km")
+trans_cables_lsoa <- summarise_to_lsoa(transmission_cables, england, summary_type = "length", name = "trans_cables_km")
 substations_lsoa <- summarise_to_lsoa(power_substations, england, summary_type = "count", name = "sub_count")
 towers_lsoa_ct <- summarise_to_lsoa(power_towers, england, summary_type = "count", name = "tower_count")
 towers_lsoa_de <- summarise_to_lsoa(power_towers, england, summary_type = "density", name ="tower_dens_km2")
 
 
 #left join everything but only keep the summaries from the joined tables by dropping the geometry 
-lsoa_all <- plants_lsoa %>%
-  left_join(
-    underground_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, ug_km),
-    by = "LSOA21CD"
+join_list <- list(
+  underground_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, all_ug_km),
+  overhead_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, all_oh_km),
+  trans_lines_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, trans_lines_km),
+  trans_cables_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, trans_cables_km),
+  substations_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, sub_count),
+  towers_lsoa_ct %>% st_drop_geometry() %>% select(LSOA21CD, tower_count),
+  towers_lsoa_de %>% st_drop_geometry() %>% select(LSOA21CD, tower_dens_km2)
+)
+
+#use reduce function from purrr so it's easier to add more items to the join list
+lsoa_all <- reduce(
+  join_list,
+  .init = plants_lsoa,
+  .f = ~ left_join(.x, .y, by = "LSOA21CD")
+)
+
+
+#create distribution variables and place them after the other line/cable variables
+lsoa_all <- lsoa_all %>%
+  mutate(
+    dist_lines_km   = all_oh_km - trans_lines_km,
+    dist_cables_km  = all_ug_km - trans_cables_km
   ) %>%
-  left_join(
-    overhead_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, oh_km),
-    by = "LSOA21CD"
-  ) %>%
-  left_join(
-    substations_lsoa %>% st_drop_geometry() %>% select(LSOA21CD, sub_count),
-    by = "LSOA21CD"
-  ) %>%
-  left_join(
-    towers_lsoa_ct %>% st_drop_geometry() %>% select(LSOA21CD, tower_count),
-    by = "LSOA21CD"
-  ) %>%
-  left_join(
-    towers_lsoa_de %>% st_drop_geometry() %>% select(LSOA21CD, tower_dens_km2),
-    by = "LSOA21CD"
-  )
+  relocate(dist_lines_km, dist_cables_km, .after = trans_cables_km)
+
 
 #save as a shp and csv
 
 st_write(lsoa_all, "./linked/england_power.shp", delete_dsn = TRUE)
 write.csv(st_drop_geometry(lsoa_all), "./linked/england_power_CSV.csv", row.names = FALSE)
+
+#save power components as shps, not necessary for transmission data as they exist as shp already
+
+st_write(underground,        "./power_shapefiles/underground.shp")
+st_write(overhead,           "./power_shapefiles/overhead.shp")
+st_write(power_plants,       "./power_shapefiles/power_plants.shp")
+st_write(power_substations,  "./power_shapefiles/power_substations.shp")
+st_write(power_towers,       "./power_shapefiles/power_towers.shp")
