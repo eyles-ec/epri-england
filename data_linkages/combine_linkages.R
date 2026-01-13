@@ -35,3 +35,5 @@ for (t in topics) {
 
 #write it all to a csv
 write.csv(st_drop_geometry(england), "./linked/all_england_combined_CSV_more.csv", row.names = FALSE)
+
+#names will be a bit untidy but for now tidy in Excel
