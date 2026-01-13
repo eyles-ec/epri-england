@@ -220,8 +220,8 @@ lsoa_all <- reduce(
 #create distribution variables and place them after the other line/cable variables
 lsoa_all <- lsoa_all %>%
   mutate(
-    dist_lines_km   = all_oh_km - trans_lines_km,
-    dist_cables_km  = all_ug_km - trans_cables_km
+    dist_lines_km   = pmax(all_oh_km - trans_lines_km, 0),
+    dist_cables_km  = pmax(all_ug_km - trans_cables_km,0)
   ) %>%
   relocate(dist_lines_km, dist_cables_km, .after = trans_cables_km)
 
